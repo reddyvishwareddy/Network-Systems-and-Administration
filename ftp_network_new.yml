@@ -1,0 +1,31 @@
+---
+- name: Configure Networking for FTP Docker Container
+  hosts: web_servers
+  become: yes
+
+  tasks:
+    - name: Create a custom Docker network for FTP
+      ansible.builtin.docker_network:
+        name: ftp_network
+        ipam_config:
+          - subnet: '172.168.10.0/30'
+
+    - name: Run FTP Docker container within custom network
+      ansible.builtin.docker_container:
+        name: ftp_server
+        image: fauria/vsftpd
+        state: started
+        published_ports:
+          - "21:21"
+        networks:
+          - name: ftp_network
+        env:
+          FTP_USER: 'user'
+          FTP_PASS: 'pass'
+          PASV_ENABLE: 'YES'
+          PASV_MIN_PORT: '21100'
+          PASV_MAX_PORT: '21110'
+        volumes:
+          - "ftp_data:/var/lib/ftp"
+          - "ftp_config:/etc/vsftpd"
+        restart_policy: always

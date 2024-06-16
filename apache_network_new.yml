@@ -1,0 +1,22 @@
+---
+- name: Configure Networking for Apache Container
+  hosts: web_servers
+  become: yes  # Use sudo if necessary
+
+  tasks:
+    - name: Create a custom Docker network
+      ansible.builtin.docker_network:
+        name: apache_network
+        ipam_config:
+          - subnet: '172.168.10.0/30'  # Your desired subnet
+
+    - name: Run Apache container within custom network
+      ansible.builtin.docker_container:
+        name: apache2
+        image: httpd
+        state: started
+        networks:
+          - name: apache_network
+        ports:
+          - "80:80"
+        restart_policy: always
